@@ -39,7 +39,7 @@ jobs:
           /usr/bin/unzip -tq dist/IPAWorkshop-unsigned.ipa
           /usr/bin/unzip -p dist/IPAWorkshop-unsigned.ipa Payload/IPAWorkshop.app/Info.plist > "$RUNNER_TEMP/IPAWorkshop.plist"
           /usr/bin/plutil -lint "$RUNNER_TEMP/IPAWorkshop.plist"
-          /usr/bin/lipo -verify_arch arm64 "$app/IPAWorkshop"
+          /usr/bin/lipo "$app/IPAWorkshop" -verify_arch arm64
           (cd dist && shasum -a 256 IPAWorkshop-unsigned.ipa > SHA256SUMS.txt)
       - name: Keep workflow artifact
         uses: actions/upload-artifact@v4
