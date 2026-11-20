@@ -11,7 +11,12 @@ targets:
   IPAWorkshop:
     type: application
     platform: iOS
-    sources: [IPAPackage.swift, IPAWorkshopApp.swift]
+    sources:
+      - IPAPackage.swift
+      - IPAWorkshopApp.swift
+      - YouTubePackagePatch.swift
+      - path: YouTubePatch.bin
+        buildPhase: resources
     dependencies:
       - package: ZIPFoundation
     settings:

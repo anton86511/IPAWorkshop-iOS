@@ -51,7 +51,7 @@ struct IPAPackage: Sendable {
         }
     }
 
-    func export(name: String, imagePath: String?, replacement: Data?) throws -> URL {
+    func export(name: String, imagePath: String?, replacement: Data?, youtube: YouTubeOptions) throws -> URL {
         let manager = FileManager.default
         let job = directory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try manager.createDirectory(at: job, withIntermediateDirectories: true)
@@ -66,6 +66,9 @@ struct IPAPackage: Sendable {
             if let imagePath, let replacement {
                 guard images.contains(imagePath) else { throw PackageError.invalidImage }
                 try replacement.write(to: stagedApp.appendingPathComponent(imagePath), options: .atomic)
+            }
+            if !youtube.isEmpty {
+                try YouTubePackagePatch.apply(youtube, to: stagedApp)
             }
             let originalName = (sourceName as NSString).deletingPathExtension
             let output = job.appendingPathComponent("\(originalName)-edited.ipa")

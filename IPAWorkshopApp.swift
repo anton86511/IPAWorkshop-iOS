@@ -20,6 +20,7 @@ private struct WorkshopView: View {
     @State private var targetImage = ""
     @State private var replacement: Data?
     @State private var replacementName = ""
+    @State private var youtube: YouTubeOptions = []
     @State private var output: URL?
     @State private var busy: String?
     @State private var errorMessage = ""
@@ -74,13 +75,26 @@ private struct WorkshopView: View {
                             }
                         }
                     }
+                    if package.bundleID == YouTubePackagePatch.bundleID {
+                        Section {
+                            Toggle("減少廣告", isOn: option(.fewerAds))
+                            Toggle("背景播放", isOn: option(.backgroundAudio))
+                            Toggle("隱藏 Shorts 分頁", isOn: option(.hideShortsTab))
+                            Toggle("移除分享連結的追蹤參數", isOn: option(.cleanShareLinks))
+                            Toggle("SponsorBlock 跳過贊助片段", isOn: option(.sponsorBlock))
+                        } header: {
+                            Text("YouTube 補丁（實驗性）")
+                        } footer: {
+                            Text("補丁相容性會隨 YouTube 版本變動。啟用 SponsorBlock 後，修改版 YouTube 會連線查詢贊助片段。")
+                        }
+                    }
                     Section {
                         Button {
                             export(package)
                         } label: {
                             Label("封裝 IPA", systemImage: "archivebox")
                         }
-                        .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && replacement == nil)
+                        .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && replacement == nil && youtube.isEmpty)
                         if let output {
                             ShareLink(item: output) {
                                 Label("分享或儲存 IPA", systemImage: "square.and.arrow.up")
@@ -134,6 +148,15 @@ private struct WorkshopView: View {
         }
     }
 
+    private func option(_ option: YouTubeOptions) -> Binding<Bool> {
+        Binding {
+            youtube.contains(option)
+        } set: { enabled in
+            clearOutput()
+            if enabled { youtube.insert(option) } else { youtube.remove(option) }
+        }
+    }
+
     private func pick(_ kind: ImportKind) {
         importKind = kind
         picking = true
@@ -148,6 +171,7 @@ private struct WorkshopView: View {
                 clearOutput()
                 if let previous = package { try? FileManager.default.removeItem(at: previous.directory) }
                 package = imported
+                youtube = []
                 newName = ""
                 targetImage = ""
                 replacement = nil
@@ -173,12 +197,13 @@ private struct WorkshopView: View {
         let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         let path = targetImage
         let image = replacement
+        let options = youtube
         busy = "正在封裝 IPA…"
         Task {
             defer { busy = nil }
             do {
                 let file = try await Task.detached(priority: .userInitiated) {
-                    try package.export(name: name, imagePath: path, replacement: image)
+                    try package.export(name: name, imagePath: path, replacement: image, youtube: options)
                 }.value
                 clearOutput()
                 output = file
